@@ -32,7 +32,7 @@ export default function FileDropZone({ onFilesAdded }) {
     <div
       onDragOver={handleDragOver}
       onDrop={handleDrop}
-      className="border-2 border-dashed border-gray-300 rounded-lg p-10 flex flex-col items-center justify-center cursor-pointer hover:border-blue-500 transition-colors bg-white hover:bg-blue-50"
+      className="group relative border-2 border-dashed border-slate-600 hover:border-indigo-500 rounded-2xl p-12 flex flex-col items-center justify-center cursor-pointer transition-all bg-slate-800/30 hover:bg-slate-800/50 backdrop-blur-sm"
       onClick={() => fileInputRef.current?.click()}
     >
       <input
@@ -43,12 +43,14 @@ export default function FileDropZone({ onFilesAdded }) {
         ref={fileInputRef}
         onChange={handleFileSelect}
       />
-      <UploadCloud className="w-12 h-12 text-gray-400 mb-4" />
-      <p className="text-gray-700 font-medium text-center">
-        Drag & drop .pptx files here, or click to select files
-      </p>
-      <p className="text-gray-400 text-sm mt-2 text-center">
-        Files are processed locally in your browser
+      <div className="w-16 h-16 rounded-full bg-slate-800 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300 shadow-inner border border-slate-700">
+        <UploadCloud className="w-8 h-8 text-indigo-400" />
+      </div>
+      <h3 className="text-xl text-white font-semibold text-center mb-2">
+        Upload presentations
+      </h3>
+      <p className="text-slate-400 text-sm mt-1 text-center max-w-sm">
+        Drag & drop your .pptx files here, or <span className="text-indigo-400 font-medium group-hover:underline">browse files</span>
       </p>
     </div>
   );

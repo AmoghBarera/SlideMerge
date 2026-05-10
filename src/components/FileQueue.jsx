@@ -33,27 +33,27 @@ function SortableFileItem({ fileWrapper, onRemove, onRangeChange }) {
   };
 
   return (
-    <div ref={setNodeRef} style={style} className="bg-white border border-gray-200 rounded-md p-3 mb-2 shadow-sm flex flex-col">
-      <div className="flex items-center justify-between">
+    <div ref={setNodeRef} style={style} className="bg-slate-800/80 border border-slate-700/50 hover:border-slate-600 rounded-xl p-4 mb-3 shadow-sm flex flex-col group transition-colors">
+      <div className="flex items-center justify-between mb-2">
         <div className="flex items-center flex-1 min-w-0">
-          <div {...attributes} {...listeners} className="cursor-grab mr-3 text-gray-400 hover:text-gray-600">
+          <div {...attributes} {...listeners} className="cursor-grab mr-4 text-slate-500 hover:text-indigo-400 transition-colors">
             <GripVertical size={20} />
           </div>
           <div className="flex-1 min-w-0 truncate">
-            <p className="text-sm font-medium text-gray-800 truncate" title={fileWrapper.file.name}>
+            <p className="text-sm font-semibold text-white truncate" title={fileWrapper.file.name}>
               {fileWrapper.file.name}
             </p>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-slate-400 mt-0.5">
               {(fileWrapper.file.size / 1024 / 1024).toFixed(2)} MB
             </p>
           </div>
         </div>
         <button
           onClick={() => onRemove(fileWrapper.id)}
-          className="ml-2 text-gray-400 hover:text-red-500 transition-colors"
+          className="ml-3 p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-400/10 rounded-md transition-all"
           title="Remove file"
         >
-          <X size={20} />
+          <X size={18} />
         </button>
       </div>
       <SlideRangePicker
@@ -66,6 +66,7 @@ function SortableFileItem({ fileWrapper, onRemove, onRangeChange }) {
 }
 
 export default function FileQueue({ files, setFiles }) {
+// ... existing sensors setup ...
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -98,8 +99,11 @@ export default function FileQueue({ files, setFiles }) {
   if (files.length === 0) return null;
 
   return (
-    <div className="mt-6">
-      <h3 className="text-lg font-medium text-gray-800 mb-3">Merge Queue</h3>
+    <div className="mt-8">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-widest">Merge Queue</h3>
+        <span className="text-xs font-medium bg-slate-800 text-indigo-300 px-2.5 py-1 rounded-full border border-indigo-500/20">{files.length} Files</span>
+      </div>
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
