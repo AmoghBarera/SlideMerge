@@ -125,11 +125,19 @@ export async function mergePptxFiles(fileWrappers, onProgress) {
         includedIndices
       });
     } else {
+      // We also need the sldMasterIdLst for later copying
+      const sldMasterIdLst = presDoc.getElementsByTagName('p:sldMasterIdLst')[0] || presDoc.getElementsByTagName('sldMasterIdLst')[0];
+      const sldMasterIds = sldMasterIdLst ? Array.from(sldMasterIdLst.children) : [];
+      
       // Discard zip and presDoc to save memory
       metadata.push({
         wrapper: fileWrappers[i],
         includedIndices,
-        sldIds: sldIds.map(n => n.getAttribute('r:id')) // we only need the r:id mapping to target
+        sldIds: sldIds.map(n => n.getAttribute('r:id')),
+        sldMasterIds: sldMasterIds.map(n => ({
+           id: n.getAttribute('id'),
+           rId: n.getAttribute('r:id')
+        }))
       });
     }
   }
@@ -145,6 +153,7 @@ export async function mergePptxFiles(fileWrappers, onProgress) {
 
   const basePresDoc = baseArc.presDoc;
   const baseSldIdLst = basePresDoc.getElementsByTagName('p:sldIdLst')[0] || basePresDoc.getElementsByTagName('sldIdLst')[0];
+  const baseSldMasterIdLst = basePresDoc.getElementsByTagName('p:sldMasterIdLst')[0] || basePresDoc.getElementsByTagName('sldMasterIdLst')[0];
 
   const mediaDedup = new MediaDeduplicator();
   let maxSldId = 255;
@@ -152,6 +161,14 @@ export async function mergePptxFiles(fileWrappers, onProgress) {
     baseArc.sldIds.forEach(node => {
       const id = parseInt(node.getAttribute('id'), 10);
       if (!isNaN(id) && id > maxSldId) maxSldId = id;
+    });
+  }
+  
+  let maxSldMasterId = 2147483648;
+  if (baseSldMasterIdLst) {
+    Array.from(baseSldMasterIdLst.children).forEach(node => {
+      const id = parseInt(node.getAttribute('id'), 10);
+      if (!isNaN(id) && id > maxSldMasterId) maxSldMasterId = id;
     });
   }
 
@@ -268,6 +285,32 @@ export async function mergePptxFiles(fileWrappers, onProgress) {
         }
         return destXmlPath;
       };
+
+      // 1. Copy Masters and their dependencies, and add to base presentation.xml
+      for (const masterInfo of srcArc.sldMasterIds) {
+        const relNode = srcPresRelsList.find(n => n.getAttribute('Id') === masterInfo.rId);
+        if (!relNode) continue;
+        
+        const srcMasterTarget = relNode.getAttribute('Target');
+        const srcMasterPath = resolvePath('ppt/presentation.xml', srcMasterTarget);
+        
+        const filename = srcMasterPath.split('/').pop();
+        const newMasterName = `${filePrefix}${filename}`;
+        const destMasterPath = srcMasterPath.replace(filename, newMasterName);
+        
+        await copyXmlAndRewriteRels(srcMasterPath, destMasterPath, 'application/vnd.openxmlformats-officedocument.presentationml.slideMaster+xml');
+        
+        const newRId = `rIdMergeMaster${uid()}`;
+        basePresRels.addRelationship(newRId, 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideMaster', srcMasterTarget.replace(filename, newMasterName));
+        
+        maxSldMasterId++;
+        const newSldMasterIdNode = basePresDoc.createElement('p:sldMasterId');
+        newSldMasterIdNode.setAttribute('id', maxSldMasterId.toString());
+        newSldMasterIdNode.setAttribute('r:id', newRId);
+        if (baseSldMasterIdLst) {
+          baseSldMasterIdLst.appendChild(newSldMasterIdNode);
+        }
+      }
 
       for (const slideIndex of srcArc.includedIndices) {
         const rIdNode = srcArc.sldIds[slideIndex - 1]; 
