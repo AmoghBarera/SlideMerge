@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Layers } from 'lucide-react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import FileDropZone from './components/FileDropZone';
 import FileQueue from './components/FileQueue';
 import MergeProgress from './components/MergeProgress';
@@ -153,6 +154,7 @@ export default function App() {
           Free tier limit: Supports up to 200MB locally. <a href="#" className="text-amber-700 hover:text-amber-800 underline underline-offset-4">Upgrade to Pro</a> for unlimited rendering.
         </p>
       </main>
+      <SpeedInsights />
     </div>
   );
 }
